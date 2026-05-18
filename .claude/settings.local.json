@@ -1,0 +1,7 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell($env:PATH = \"C:\\\\laragon\\\\bin\\\\php\\\\php-8.3.30-Win32-vs16-x64;C:\\\\laragon\\\\bin\\\\composer;\" + $env:PATH; cd \"d:\\\\KOPIPRO\\\\laravel-app\"; php artisan migrate:fresh --seed 2>&1)"
+    ]
+  }
+}
