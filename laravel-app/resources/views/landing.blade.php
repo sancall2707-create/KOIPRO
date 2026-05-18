@@ -208,20 +208,27 @@
     <div class="px-4 pb-12">
         <h2 class="text-xl font-bold mb-5 px-2" style="color: var(--text-dark);">Kategori Menu</h2>
         <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            @foreach([
-                ['name' => 'Coffee',    'emoji' => '☕', 'color' => 'hsl(24,35%,25%)'],
-                ['name' => 'Non Coffee','emoji' => '🥤', 'color' => 'hsl(185,50%,35%)'],
-                ['name' => 'Food',      'emoji' => '🍜', 'color' => 'hsl(15,55%,40%)'],
-                ['name' => 'Snacks',    'emoji' => '🍪', 'color' => 'hsl(35,70%,40%)'],
-                ['name' => 'Dessert',   'emoji' => '🍮', 'color' => 'hsl(45,65%,42%)'],
-            ] as $cat)
+            @php
+                $categoryColors = [
+                    'hsl(24,35%,25%)', 'hsl(185,50%,35%)', 'hsl(15,55%,40%)',
+                    'hsl(35,70%,40%)', 'hsl(45,65%,42%)', 'hsl(160,45%,35%)',
+                    'hsl(270,40%,40%)', 'hsl(200,50%,38%)',
+                ];
+                $categoryEmojis = [
+                    'Coffee' => '☕', 'Non Coffee' => '🥤', 'Food' => '🍜',
+                    'Snacks' => '🍪', 'Dessert' => '🍮', 'Tea' => '🍵',
+                ];
+            @endphp
+            @forelse($categories as $index => $category)
             <a href="{{ route('menu') }}"
                class="rounded-xl p-4 text-left transition-transform active:scale-95 hover:opacity-90"
-               style="background: {{ $cat['color'] }}; color: hsl(40,33%,97%);">
-                <div class="text-2xl mb-2">{{ $cat['emoji'] }}</div>
-                <div class="text-sm font-semibold">{{ $cat['name'] }}</div>
+               style="background: {{ $categoryColors[$index % count($categoryColors)] }}; color: hsl(40,33%,97%);">
+                <div class="text-2xl mb-2">{{ $categoryEmojis[$category->name] ?? '🍽️' }}</div>
+                <div class="text-sm font-semibold">{{ $category->name }}</div>
             </a>
-            @endforeach
+            @empty
+            <p class="col-span-full text-center text-sm" style="color: hsl(24,10%,50%);">Belum ada kategori</p>
+            @endforelse
         </div>
     </div>
 

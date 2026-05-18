@@ -34,6 +34,28 @@
 
             <div class="px-4 py-5 space-y-4">
 
+                <!-- Payment Notice -->
+                <template x-if="order.status === 'pending' || order.status === 'processing'">
+                    <div class="rounded-2xl border p-4 flex items-start gap-3"
+                         style="border-color: hsl(35,80%,70%); background: hsl(45,100%,96%);">
+                        <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
+                             style="background: hsl(35,90%,50%);">
+                            <svg class="w-5 h-5" fill="none" stroke="white" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="font-semibold text-sm" style="color: hsl(24,10%,10%);">Pembayaran di Kasir</p>
+                            <p class="text-xs mt-1" style="color: hsl(24,10%,40%);">
+                                Silakan lakukan pembayaran di kasir dengan menyebutkan nomor pesanan
+                                <span class="font-bold" style="color: hsl(24,35%,25%);" x-text="order.orderNumber"></span>.
+                                Kami menerima pembayaran tunai dan QRIS.
+                            </p>
+                        </div>
+                    </div>
+                </template>
+
                 <!-- Customer info -->
                 <div class="rounded-2xl border p-4" style="border-color: var(--border); background: var(--bg-light);">
                     <div class="grid grid-cols-2 gap-4 text-sm">
