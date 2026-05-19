@@ -242,11 +242,26 @@ function orderTracking(orderNumber) {
                     // Check if status changed to ready or completed
                     if (this.order && this.order.status !== newOrder.status) {
                         if (newOrder.status === 'ready') {
-                            this.showUserNotification('Pesanan Siap!', 'Pesanan Anda sudah siap diambil. Silakan ke kasir.');
+                            this.showUserNotification(
+                                'Pesanan Siap Diambil!',
+                                'Silakan ambil pesanan di counter kasir.',
+                                'PESANAN SUDAH SIAP, SILAHKAN AMBIL DI MEJA KASIR COUNTER PICKUP',
+                                true
+                            );
                         } else if (newOrder.status === 'completed') {
-                            this.showUserNotification('Pesanan Selesai!', 'Terima kasih telah memesan di Kopi Tiang Alam.');
+                            this.showUserNotification(
+                                'Pesanan Selesai!',
+                                'Terima kasih telah memesan di Kopi Tiang Alam.',
+                                'Terima kasih telah memesan di Kopi Tiang Alam',
+                                false
+                            );
                         } else if (newOrder.status === 'preparing') {
-                            this.showUserNotification('Pesanan Sedang Dibuat', 'Barista sedang menyiapkan pesanan Anda.');
+                            this.showUserNotification(
+                                'Pesanan Sedang Dibuat',
+                                'Barista sedang menyiapkan pesanan Anda.',
+                                'Pesanan Anda sedang disiapkan oleh barista',
+                                false
+                            );
                         }
                     }
                     this.order = newOrder;
@@ -255,23 +270,53 @@ function orderTracking(orderNumber) {
             this.loading = false;
         },
 
-        showUserNotification(title, body) {
-            // Play sound
+        showUserNotification(title, body, speech, loud) {
+            // Play sound — louder for "ready" status
             try {
                 const ctx = new (window.AudioContext || window.webkitAudioContext)();
-                const notes = [523, 659, 784];
+                const notes = loud ? [880, 1100, 1320, 1100, 880, 1100, 1320] : [523, 659, 784];
+                const volume = loud ? 0.6 : 0.4;
+                const waveType = loud ? 'square' : 'sine';
                 notes.forEach((freq, i) => {
                     const osc = ctx.createOscillator();
                     const gain = ctx.createGain();
                     osc.connect(gain);
                     gain.connect(ctx.destination);
                     osc.frequency.value = freq;
-                    osc.type = 'sine';
-                    gain.gain.setValueAtTime(0.4, ctx.currentTime + i * 0.2);
-                    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.2 + 0.5);
-                    osc.start(ctx.currentTime + i * 0.2);
-                    osc.stop(ctx.currentTime + i * 0.2 + 0.5);
+                    osc.type = waveType;
+                    gain.gain.setValueAtTime(volume, ctx.currentTime + i * 0.13);
+                    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.13 + 0.35);
+                    osc.start(ctx.currentTime + i * 0.13);
+                    osc.stop(ctx.currentTime + i * 0.13 + 0.35);
                 });
+            } catch (e) {}
+
+            // Speak the message in Indonesian
+            try {
+                const delay = loud ? 1100 : 700;
+                setTimeout(() => {
+                    if ('speechSynthesis' in window) {
+                        // Cancel any ongoing speech
+                        window.speechSynthesis.cancel();
+                        const utterance = new SpeechSynthesisUtterance(speech);
+                        utterance.lang = 'id-ID';
+                        utterance.volume = 1;
+                        utterance.rate = loud ? 0.85 : 0.95;
+                        utterance.pitch = loud ? 1.1 : 1;
+                        window.speechSynthesis.speak(utterance);
+                        // For loud (ready), repeat once
+                        if (loud) {
+                            setTimeout(() => {
+                                const u2 = new SpeechSynthesisUtterance(speech);
+                                u2.lang = 'id-ID';
+                                u2.volume = 1;
+                                u2.rate = 0.85;
+                                u2.pitch = 1.1;
+                                window.speechSynthesis.speak(u2);
+                            }, 4500);
+                        }
+                    }
+                }, delay);
             } catch (e) {}
 
             // Show browser notification if permitted
@@ -285,7 +330,7 @@ function orderTracking(orderNumber) {
             this.userNotifTitle = title;
             this.userNotifBody = body;
             this.showUserNotif = true;
-            setTimeout(() => this.showUserNotif = false, 10000);
+            setTimeout(() => this.showUserNotif = false, loud ? 15000 : 10000);
         },
 
         userNotifTitle: '',
