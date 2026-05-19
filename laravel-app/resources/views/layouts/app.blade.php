@@ -12,10 +12,10 @@
                 extend: {
                     colors: {
                         brand: {
-                            dark:   'hsl(24,35%,18%)',
-                            medium: 'hsl(24,35%,25%)',
-                            light:  'hsl(40,33%,98%)',
-                            accent: 'hsl(35,90%,50%)',
+                            dark:   '#0a0a0a',
+                            medium: '#1a1a1a',
+                            light:  '#f5f0e8',
+                            accent: '#c9a84c',
                         }
                     }
                 }
@@ -24,17 +24,19 @@
     </script>
     <style>
         :root {
-            --bg-dark:    hsl(24,35%,18%);
-            --bg-medium:  hsl(24,35%,25%);
-            --bg-light:   hsl(40,33%,98%);
-            --accent:     hsl(35,90%,50%);
-            --accent-muted: hsl(35,45%,75%);
-            --text-dark:  hsl(24,10%,10%);
-            --text-mid:   hsl(24,10%,40%);
-            --text-light: hsl(40,33%,98%);
-            --border:     hsl(35,25%,85%);
-            --success:    hsl(145,65%,42%);
-            --danger:     hsl(0,84%,60%);
+            --bg-dark:    #0a0a0a;
+            --bg-medium:  #1a1a1a;
+            --bg-light:   #f5f0e8;
+            --accent:     #c9a84c;
+            --accent-muted: #d4b96a;
+            --text-dark:  #1a1a1a;
+            --text-mid:   #4a4a4a;
+            --text-light: #f5f0e8;
+            --border:     #2a2a2a;
+            --success:    #4caf50;
+            --danger:     #e53935;
+            --gold-light: #e8d48b;
+            --gold-dark:  #8b7a3c;
         }
         [x-cloak] { display: none !important; }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
@@ -43,7 +45,7 @@
     <script src="{{ asset('js/cart.js') }}" defer></script>
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 </head>
-<body style="background: var(--bg-light);">
+<body style="background: var(--bg-dark);">
     @yield('content')
 </body>
 </html>

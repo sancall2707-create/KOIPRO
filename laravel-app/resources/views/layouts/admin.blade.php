@@ -8,16 +8,16 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         :root {
-            --bg-dark:   hsl(24,35%,18%);
-            --bg-medium: hsl(24,35%,25%);
-            --bg-light:  hsl(40,33%,98%);
-            --accent:    hsl(35,90%,50%);
-            --text-dark: hsl(24,10%,10%);
-            --text-mid:  hsl(24,10%,40%);
-            --text-light:hsl(40,33%,98%);
-            --border:    hsl(35,25%,85%);
-            --success:   hsl(145,65%,42%);
-            --danger:    hsl(0,84%,60%);
+            --bg-dark:   #0a0a0a;
+            --bg-medium: #1a1a1a;
+            --bg-light:  #f5f0e8;
+            --accent:    #c9a84c;
+            --text-dark: #1a1a1a;
+            --text-mid:  #4a4a4a;
+            --text-light:#f5f0e8;
+            --border:    #2a2a2a;
+            --success:   #4caf50;
+            --danger:    #e53935;
         }
         [x-cloak] { display: none !important; }
     </style>
@@ -38,15 +38,11 @@
            :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
            style="background: var(--bg-dark);">
 
-        <div class="flex items-center gap-2 px-5 py-5 border-b" style="border-color: hsl(24,30%,25%);">
-            <div class="p-1.5 rounded-lg" style="background: var(--accent);">
-                <svg class="w-4 h-4" fill="none" stroke="hsl(24,10%,10%)" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 8h1a4 4 0 010 8h-1M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8zM6 1v3M10 1v3M14 1v3"/>
-                </svg>
-            </div>
+        <div class="flex items-center gap-2 px-5 py-5 border-b" style="border-color: #2a2a2a;">
+            <img src="{{ asset('images/logo.png') }}" alt="Logo" class="w-8 h-8 rounded-full" style="border: 1px solid #c9a84c;" />
             <div>
-                <p class="font-bold text-sm leading-none" style="color: var(--text-light);">Kopi Tiang Alam</p>
-                <p class="text-xs mt-0.5" style="color: hsl(35,30%,55%);">Admin Panel</p>
+                <p class="font-bold text-sm leading-none" style="color: #c9a84c;">Kopi Tiang Alam</p>
+                <p class="text-xs mt-0.5" style="color: #8b7a3c;">Admin Panel</p>
             </div>
             <button class="ml-auto lg:hidden" @click="sidebarOpen = false">
                 <svg class="w-5 h-5" fill="none" stroke="hsl(35,30%,60%)" viewBox="0 0 24 24">
