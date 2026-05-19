@@ -108,8 +108,93 @@
         <main class="flex-1 overflow-auto p-4 lg:p-6">
             @yield('content')
         </main>
+
+        <!-- Order Notification System -->
+        <div x-data="orderNotification()" x-init="init()" x-cloak>
+            <!-- Notification popup -->
+            <div x-show="showNotif" x-transition
+                 class="fixed top-4 right-4 z-50 max-w-sm w-full rounded-2xl border p-4 shadow-lg"
+                 style="background: white; border-color: hsl(35,90%,50%);">
+                <div class="flex items-start gap-3">
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0 animate-pulse"
+                         style="background: hsl(35,90%,50%);">
+                        <svg class="w-5 h-5" fill="none" stroke="white" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+                        </svg>
+                    </div>
+                    <div class="flex-1">
+                        <p class="font-bold text-sm" style="color: var(--text-dark);">Pesanan Baru Masuk!</p>
+                        <p class="text-xs mt-1" style="color: var(--text-mid);" x-text="notifMessage"></p>
+                    </div>
+                    <button @click="showNotif = false" class="shrink-0">
+                        <svg class="w-4 h-4" fill="none" stroke="hsl(24,10%,50%)" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+                <a href="{{ route('admin.orders') }}" class="block mt-3 text-center text-xs font-semibold py-2 rounded-xl"
+                   style="background: hsl(35,90%,50%); color: hsl(24,10%,10%);">
+                    Lihat Pesanan
+                </a>
+            </div>
+        </div>
+
+        <script>
+        function orderNotification() {
+            return {
+                lastOrderCount: null,
+                showNotif: false,
+                notifMessage: '',
+                audioCtx: null,
+
+                init() {
+                    this.checkNewOrders();
+                    setInterval(() => this.checkNewOrders(), 10000);
+                },
+
+                async checkNewOrders() {
+                    try {
+                        const res = await fetch('/admin/api/orders?status=pending');
+                        if (!res.ok) return;
+                        const orders = await res.json();
+                        const currentCount = orders.length;
+
+                        if (this.lastOrderCount !== null && currentCount > this.lastOrderCount) {
+                            const newCount = currentCount - this.lastOrderCount;
+                            this.notifMessage = newCount + ' pesanan baru menunggu konfirmasi';
+                            this.showNotif = true;
+                            this.playSound();
+                            setTimeout(() => this.showNotif = false, 8000);
+                        }
+                        this.lastOrderCount = currentCount;
+                    } catch (e) {}
+                },
+
+                playSound() {
+                    try {
+                        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                        // Play a pleasant bell sound
+                        const notes = [880, 1100, 1320];
+                        notes.forEach((freq, i) => {
+                            const osc = ctx.createOscillator();
+                            const gain = ctx.createGain();
+                            osc.connect(gain);
+                            gain.connect(ctx.destination);
+                            osc.frequency.value = freq;
+                            osc.type = 'sine';
+                            gain.gain.setValueAtTime(0.3, ctx.currentTime + i * 0.15);
+                            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.15 + 0.4);
+                            osc.start(ctx.currentTime + i * 0.15);
+                            osc.stop(ctx.currentTime + i * 0.15 + 0.4);
+                        });
+                    } catch (e) {}
+                }
+            };
+        }
+        </script>
     </div>
-</div>
+
 
 </body>
 </html>
