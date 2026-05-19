@@ -332,7 +332,7 @@
                     <p class="text-xs" style="color: var(--text-mid);"
                        x-text="filteredOrders.length + ' pesanan ditampilkan'"></p>
                     <p class="text-sm font-bold" style="color: hsl(35,90%,40%);"
-                       x-text="'Total: Rp ' + filteredOrders.filter(o => o.status !== \'cancelled\').reduce((s,o) => s + o.totalPrice, 0).toLocaleString(\'id-ID\')"></p>
+                       x-text="'Total: Rp ' + filteredOrdersTotal().toLocaleString('id-ID')"></p>
                 </div>
             </div>
 
@@ -366,6 +366,12 @@ function analyticsPage() {
                     o.customerName.toLowerCase().includes(q);
                 return matchStatus && matchSearch;
             });
+        },
+
+        filteredOrdersTotal() {
+            return this.filteredOrders
+                .filter(o => o.status !== 'cancelled')
+                .reduce((s, o) => s + o.totalPrice, 0);
         },
 
         setPreset(key) {
