@@ -408,11 +408,23 @@ function analyticsPage() {
                 this.data = await res.json();
             }
             this.loading = false;
-            // Wait for DOM to settle, then render charts
-            setTimeout(() => {
+            // Wait for DOM to be ready, retry until canvas exists
+            this.waitAndRender();
+        },
+
+        waitAndRender(attempts = 0) {
+            if (attempts > 20) return; // give up after 2s
+            const dailyExists = document.getElementById('dailyChart');
+            const productExists = document.getElementById('productChart');
+            if (dailyExists) {
                 this.renderDailyChart();
+            }
+            if (productExists) {
                 this.renderProductChart();
-            }, 300);
+            }
+            if (!dailyExists || !productExists) {
+                setTimeout(() => this.waitAndRender(attempts + 1), 100);
+            }
         },
 
         updateDailyChart() {
