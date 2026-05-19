@@ -173,21 +173,31 @@
 
                 playSound() {
                     try {
+                        // Play loud bell sound first
                         const ctx = new (window.AudioContext || window.webkitAudioContext)();
-                        // Play a pleasant bell sound
-                        const notes = [880, 1100, 1320];
+                        const notes = [880, 1100, 1320, 1100, 880];
                         notes.forEach((freq, i) => {
                             const osc = ctx.createOscillator();
                             const gain = ctx.createGain();
                             osc.connect(gain);
                             gain.connect(ctx.destination);
                             osc.frequency.value = freq;
-                            osc.type = 'sine';
-                            gain.gain.setValueAtTime(0.3, ctx.currentTime + i * 0.15);
-                            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.15 + 0.4);
-                            osc.start(ctx.currentTime + i * 0.15);
-                            osc.stop(ctx.currentTime + i * 0.15 + 0.4);
+                            osc.type = 'square';
+                            gain.gain.setValueAtTime(0.5, ctx.currentTime + i * 0.12);
+                            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.12 + 0.3);
+                            osc.start(ctx.currentTime + i * 0.12);
+                            osc.stop(ctx.currentTime + i * 0.12 + 0.3);
                         });
+
+                        // Then speak "ADA ORDERAN MASUK"
+                        setTimeout(() => {
+                            const utterance = new SpeechSynthesisUtterance('ADA ORDERAN MASUK');
+                            utterance.lang = 'id-ID';
+                            utterance.volume = 1;
+                            utterance.rate = 0.9;
+                            utterance.pitch = 1.2;
+                            speechSynthesis.speak(utterance);
+                        }, 700);
                     } catch (e) {}
                 }
             };

@@ -153,6 +153,30 @@
                     </svg>
                     Kembali ke Beranda
                 </a>
+
+                <!-- User notification popup -->
+                <div x-show="showUserNotif" x-transition
+                     class="fixed top-4 left-4 right-4 z-50 max-w-sm mx-auto rounded-2xl border p-4 shadow-lg"
+                     style="background: white; border-color: hsl(145,65%,42%);">
+                    <div class="flex items-start gap-3">
+                        <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
+                             style="background: hsl(145,65%,42%);">
+                            <svg class="w-5 h-5" fill="none" stroke="white" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
+                        <div class="flex-1">
+                            <p class="font-bold text-sm" style="color: var(--text-dark);" x-text="userNotifTitle"></p>
+                            <p class="text-xs mt-1" style="color: var(--text-mid);" x-text="userNotifBody"></p>
+                        </div>
+                        <button @click="showUserNotif = false" class="shrink-0">
+                            <svg class="w-4 h-4" fill="none" stroke="hsl(24,10%,50%)" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </template>
@@ -213,10 +237,60 @@ function orderTracking(orderNumber) {
         async fetchOrder() {
             try {
                 const res = await fetch('/api/orders/' + this.orderNumber);
-                if (res.ok) this.order = await res.json();
+                if (res.ok) {
+                    const newOrder = await res.json();
+                    // Check if status changed to ready or completed
+                    if (this.order && this.order.status !== newOrder.status) {
+                        if (newOrder.status === 'ready') {
+                            this.showUserNotification('Pesanan Siap!', 'Pesanan Anda sudah siap diambil. Silakan ke kasir.');
+                        } else if (newOrder.status === 'completed') {
+                            this.showUserNotification('Pesanan Selesai!', 'Terima kasih telah memesan di Kopi Tiang Alam.');
+                        } else if (newOrder.status === 'preparing') {
+                            this.showUserNotification('Pesanan Sedang Dibuat', 'Barista sedang menyiapkan pesanan Anda.');
+                        }
+                    }
+                    this.order = newOrder;
+                }
             } catch (e) {}
             this.loading = false;
         },
+
+        showUserNotification(title, body) {
+            // Play sound
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const notes = [523, 659, 784];
+                notes.forEach((freq, i) => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.frequency.value = freq;
+                    osc.type = 'sine';
+                    gain.gain.setValueAtTime(0.4, ctx.currentTime + i * 0.2);
+                    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + i * 0.2 + 0.5);
+                    osc.start(ctx.currentTime + i * 0.2);
+                    osc.stop(ctx.currentTime + i * 0.2 + 0.5);
+                });
+            } catch (e) {}
+
+            // Show browser notification if permitted
+            if ('Notification' in window && Notification.permission === 'granted') {
+                new Notification(title, { body: body, icon: '/favicon.ico' });
+            } else if ('Notification' in window && Notification.permission !== 'denied') {
+                Notification.requestPermission();
+            }
+
+            // Show in-page alert
+            this.userNotifTitle = title;
+            this.userNotifBody = body;
+            this.showUserNotif = true;
+            setTimeout(() => this.showUserNotif = false, 10000);
+        },
+
+        userNotifTitle: '',
+        userNotifBody: '',
+        showUserNotif: false,
 
         init() {
             this.fetchOrder();
