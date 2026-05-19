@@ -443,12 +443,21 @@ function analyticsPage() {
         },
 
         renderDailyChart() {
+            if (typeof Chart === 'undefined') {
+                setTimeout(() => this.renderDailyChart(), 200);
+                return;
+            }
             if (!this.data || !this.data.dailySales || this.data.dailySales.length === 0) return;
             
             const canvas = document.getElementById('dailyChart');
             if (!canvas) return;
 
-            // Destroy previous instance properly
+            // Destroy any existing Chart instance on this canvas
+            try {
+                const existing = Chart.getChart(canvas);
+                if (existing) existing.destroy();
+            } catch (e) {}
+
             if (this.chartDaily) {
                 try { this.chartDaily.destroy(); } catch(e) {}
                 this.chartDaily = null;
@@ -461,7 +470,8 @@ function analyticsPage() {
             const values = this.data.dailySales.map(r => isRevenue ? r.revenue : r.orderCount);
 
             try {
-                this.chartDaily = new Chart(canvas, {
+                const ctx = canvas.getContext('2d');
+                this.chartDaily = new Chart(ctx, {
                     type: 'bar',
                     data: {
                         labels,
@@ -503,10 +513,19 @@ function analyticsPage() {
         },
 
         renderProductChart() {
+            if (typeof Chart === 'undefined') {
+                setTimeout(() => this.renderProductChart(), 200);
+                return;
+            }
             if (!this.data || !this.data.topProducts || this.data.topProducts.length === 0) return;
             
             const canvas = document.getElementById('productChart');
             if (!canvas) return;
+
+            try {
+                const existing = Chart.getChart(canvas);
+                if (existing) existing.destroy();
+            } catch (e) {}
 
             if (this.chartProduct) {
                 try { this.chartProduct.destroy(); } catch(e) {}
@@ -515,7 +534,8 @@ function analyticsPage() {
 
             const top = this.data.topProducts.slice(0, 8);
             try {
-                this.chartProduct = new Chart(canvas, {
+                const ctx = canvas.getContext('2d');
+                this.chartProduct = new Chart(ctx, {
                     type: 'bar',
                     data: {
                         labels: top.map(p => p.productName),

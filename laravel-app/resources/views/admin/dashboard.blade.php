@@ -156,6 +156,11 @@ function dashboard() {
         },
 
         renderChart() {
+            // Ensure Chart.js is loaded
+            if (typeof Chart === 'undefined') {
+                setTimeout(() => this.renderChart(), 200);
+                return;
+            }
             if (!this.stats.ordersByStatus || this.stats.ordersByStatus.length === 0) return;
             const labels = {
                 pending: 'Menunggu', processing: 'Diproses', preparing: 'Dibuat',
@@ -163,12 +168,21 @@ function dashboard() {
             };
             const canvas = document.getElementById('statusChart');
             if (!canvas) return;
+
+            // Check if Chart.js has any existing chart on this canvas and destroy it
+            try {
+                const existing = Chart.getChart(canvas);
+                if (existing) existing.destroy();
+            } catch (e) {}
+
             if (this.chart) {
                 try { this.chart.destroy(); } catch(e) {}
                 this.chart = null;
             }
+
             try {
-                this.chart = new Chart(canvas, {
+                const ctx = canvas.getContext('2d');
+                this.chart = new Chart(ctx, {
                     type: 'bar',
                     data: {
                         labels: this.stats.ordersByStatus.map(s => labels[s.status] || s.status),
@@ -188,7 +202,9 @@ function dashboard() {
                         },
                     },
                 });
-            } catch (e) { console.error('Status chart error:', e); }
+            } catch (e) {
+                console.error('Status chart error:', e);
+            }
         },
     };
 }
