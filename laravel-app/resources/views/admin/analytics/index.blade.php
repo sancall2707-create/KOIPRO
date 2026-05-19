@@ -413,42 +413,46 @@ function analyticsPage() {
         },
 
         waitAndRender(attempts = 0) {
-            if (attempts > 20) return; // give up after 2s
+            if (attempts > 20) return;
             const dailyExists = document.getElementById('dailyChart');
             const productExists = document.getElementById('productChart');
-            if (dailyExists) {
+            const needsDaily = this.data && this.data.dailySales && this.data.dailySales.length > 0 && !this.chartDaily;
+            const needsProduct = this.data && this.data.topProducts && this.data.topProducts.length > 0 && !this.chartProduct;
+            
+            if (dailyExists && needsDaily) {
                 this.renderDailyChart();
             }
-            if (productExists) {
+            if (productExists && needsProduct) {
                 this.renderProductChart();
             }
-            if (!dailyExists || !productExists) {
+            // If still need to render but element not ready, retry
+            const stillWaitingDaily = needsDaily && !dailyExists;
+            const stillWaitingProduct = needsProduct && !productExists;
+            if (stillWaitingDaily || stillWaitingProduct) {
                 setTimeout(() => this.waitAndRender(attempts + 1), 100);
             }
         },
 
         updateDailyChart() {
+            // Clear current chart so it can re-render with new data type
+            if (this.chartDaily) {
+                try { this.chartDaily.destroy(); } catch(e) {}
+                this.chartDaily = null;
+            }
             setTimeout(() => this.renderDailyChart(), 50);
         },
 
         renderDailyChart() {
             if (!this.data || !this.data.dailySales || this.data.dailySales.length === 0) return;
             
-            // Destroy previous instance
-            if (this.chartDaily) {
-                this.chartDaily.destroy();
-                this.chartDaily = null;
-            }
-
             const canvas = document.getElementById('dailyChart');
             if (!canvas) return;
-            
-            // Reset canvas
-            const parent = canvas.parentNode;
-            const newCanvas = document.createElement('canvas');
-            newCanvas.id = 'dailyChart';
-            parent.removeChild(canvas);
-            parent.appendChild(newCanvas);
+
+            // Destroy previous instance properly
+            if (this.chartDaily) {
+                try { this.chartDaily.destroy(); } catch(e) {}
+                this.chartDaily = null;
+            }
 
             const labels = this.data.dailySales.map(r =>
                 new Date(r.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })
@@ -456,96 +460,93 @@ function analyticsPage() {
             const isRevenue = this.dailyChart === 'revenue';
             const values = this.data.dailySales.map(r => isRevenue ? r.revenue : r.orderCount);
 
-            this.chartDaily = new Chart(newCanvas, {
-                type: 'bar',
-                data: {
-                    labels,
-                    datasets: [{
-                        label: isRevenue ? 'Pendapatan (Rp)' : 'Jumlah Pesanan',
-                        data: values,
-                        backgroundColor: '#c9a84c',
-                        borderRadius: 5,
-                    }],
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return isRevenue
-                                        ? 'Rp ' + context.parsed.y.toLocaleString('id-ID')
-                                        : context.parsed.y + ' pesanan';
+            try {
+                this.chartDaily = new Chart(canvas, {
+                    type: 'bar',
+                    data: {
+                        labels,
+                        datasets: [{
+                            label: isRevenue ? 'Pendapatan (Rp)' : 'Jumlah Pesanan',
+                            data: values,
+                            backgroundColor: '#c9a84c',
+                            borderRadius: 5,
+                        }],
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return isRevenue
+                                            ? 'Rp ' + context.parsed.y.toLocaleString('id-ID')
+                                            : context.parsed.y + ' pesanan';
+                                    },
+                                },
+                            },
+                        },
+                        scales: {
+                            x: { grid: { display: false }, ticks: { font: { size: 10 }, maxRotation: 45 } },
+                            y: {
+                                grid: { color: '#eee' },
+                                ticks: {
+                                    font: { size: 10 },
+                                    callback: function(v) { return isRevenue ? 'Rp ' + (v / 1000).toFixed(0) + 'rb' : v; },
                                 },
                             },
                         },
                     },
-                    scales: {
-                        x: { grid: { display: false }, ticks: { font: { size: 10 }, maxRotation: 45 } },
-                        y: {
-                            grid: { color: '#eee' },
-                            ticks: {
-                                font: { size: 10 },
-                                callback: function(v) { return isRevenue ? 'Rp ' + (v / 1000).toFixed(0) + 'rb' : v; },
-                            },
-                        },
-                    },
-                },
-            });
+                });
+            } catch (e) { console.error('Daily chart error:', e); }
         },
 
         renderProductChart() {
             if (!this.data || !this.data.topProducts || this.data.topProducts.length === 0) return;
             
+            const canvas = document.getElementById('productChart');
+            if (!canvas) return;
+
             if (this.chartProduct) {
-                this.chartProduct.destroy();
+                try { this.chartProduct.destroy(); } catch(e) {}
                 this.chartProduct = null;
             }
 
-            const canvas = document.getElementById('productChart');
-            if (!canvas) return;
-            
-            // Reset canvas
-            const parent = canvas.parentNode;
-            const newCanvas = document.createElement('canvas');
-            newCanvas.id = 'productChart';
-            parent.removeChild(canvas);
-            parent.appendChild(newCanvas);
-
             const top = this.data.topProducts.slice(0, 8);
-            this.chartProduct = new Chart(newCanvas, {
-                type: 'bar',
-                data: {
-                    labels: top.map(p => p.productName),
-                    datasets: [{
-                        label: 'Jumlah Terjual',
-                        data: top.map(p => p.totalQty),
-                        backgroundColor: [
-                            '#c9a84c', '#d4b96a', '#8b7a3c',
-                            '#e8d48b', '#a89240', '#b8982e',
-                            '#d4a017', '#cca43b',
-                        ],
-                        borderRadius: 5,
-                    }],
-                },
-                options: {
-                    indexAxis: 'y',
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            callbacks: { label: function(context) { return context.parsed.x + ' item'; } },
+            try {
+                this.chartProduct = new Chart(canvas, {
+                    type: 'bar',
+                    data: {
+                        labels: top.map(p => p.productName),
+                        datasets: [{
+                            label: 'Jumlah Terjual',
+                            data: top.map(p => p.totalQty),
+                            backgroundColor: [
+                                '#c9a84c', '#d4b96a', '#8b7a3c',
+                                '#e8d48b', '#a89240', '#b8982e',
+                                '#d4a017', '#cca43b',
+                            ],
+                            borderRadius: 5,
+                        }],
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: { label: function(context) { return context.parsed.x + ' item'; } },
+                            },
+                        },
+                        scales: {
+                            x: { grid: { color: '#eee' }, ticks: { font: { size: 10 } } },
+                            y: { grid: { display: false }, ticks: { font: { size: 11 } } },
                         },
                     },
-                    scales: {
-                        x: { grid: { color: '#eee' }, ticks: { font: { size: 10 } } },
-                        y: { grid: { display: false }, ticks: { font: { size: 11 } } },
-                    },
-                },
-            });
+                });
+            } catch (e) { console.error('Product chart error:', e); }
         },
 
         statusLabel(s) {
