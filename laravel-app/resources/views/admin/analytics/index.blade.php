@@ -112,8 +112,7 @@
                         <p class="text-xs mt-0.5" style="color: var(--text-mid);">Jumlah pesanan dan pendapatan per hari</p>
                     </div>
                     <div class="flex gap-2">
-                        <button @click="dailyChart === 'revenue' ? dailyChart = 'revenue' : dailyChart = 'revenue'"
-                                @click.stop="dailyChart = 'revenue'; updateDailyChart()"
+                        <button @click="dailyChart = 'revenue'; updateDailyChart()"
                                 class="px-2.5 py-1 rounded-lg text-xs font-medium border"
                                 :style="dailyChart === 'revenue'
                                     ? 'background: var(--bg-medium); color: white; border-color: var(--bg-medium);'
@@ -130,11 +129,11 @@
                     </div>
                 </div>
 
-                <div x-show="data.dailySales.length === 0" class="flex items-center justify-center h-32"
+                <div x-show="data && data.dailySales && data.dailySales.length === 0" class="flex items-center justify-center h-32"
                      style="color: var(--text-mid);">
                     <p class="text-sm">Tidak ada data untuk periode ini</p>
                 </div>
-                <div x-show="data.dailySales.length > 0">
+                <div style="min-height: 200px;">
                     <canvas id="dailyChart" height="80"></canvas>
                 </div>
             </div>
@@ -200,11 +199,11 @@
                     <p class="text-xs mt-0.5" style="color: var(--text-mid);">Berdasarkan jumlah item yang dipesan (tidak termasuk pesanan batal)</p>
                 </div>
 
-                <div x-show="data.topProducts.length === 0" class="p-8 text-center">
+                <div x-show="data && data.topProducts && data.topProducts.length === 0" class="p-8 text-center">
                     <p class="text-sm" style="color: var(--text-mid);">Tidak ada data produk untuk periode ini</p>
                 </div>
 
-                <div x-show="data.topProducts.length > 0">
+                <div x-show="data && data.topProducts && data.topProducts.length > 0">
                     {{-- Bar chart produk --}}
                     <div class="px-4 pt-4 pb-2">
                         <canvas id="productChart" height="70"></canvas>
@@ -411,11 +410,17 @@ function analyticsPage() {
         },
 
         renderDailyChart() {
-            if (!this.data || this.data.dailySales.length === 0) return;
-            const ctx = document.getElementById('dailyChart');
-            if (!ctx) return;
-            if (this.chartDaily) this.chartDaily.destroy();
+            if (!this.data || !this.data.dailySales || this.data.dailySales.length === 0) return;
+            const canvas = document.getElementById('dailyChart');
+            if (!canvas) return;
 
+            // Destroy existing chart instance
+            if (this.chartDaily) {
+                this.chartDaily.destroy();
+                this.chartDaily = null;
+            }
+
+            const ctx = canvas.getContext('2d');
             const labels = this.data.dailySales.map(r =>
                 new Date(r.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })
             );
@@ -429,12 +434,13 @@ function analyticsPage() {
                     datasets: [{
                         label: isRevenue ? 'Pendapatan (Rp)' : 'Jumlah Pesanan',
                         data: values,
-                        backgroundColor: 'hsl(24,35%,25%)',
+                        backgroundColor: '#c9a84c',
                         borderRadius: 5,
                     }],
                 },
                 options: {
                     responsive: true,
+                    maintainAspectRatio: false,
                     plugins: {
                         legend: { display: false },
                         tooltip: {
@@ -460,11 +466,16 @@ function analyticsPage() {
         },
 
         renderProductChart() {
-            if (!this.data || this.data.topProducts.length === 0) return;
-            const ctx = document.getElementById('productChart');
-            if (!ctx) return;
-            if (this.chartProduct) this.chartProduct.destroy();
+            if (!this.data || !this.data.topProducts || this.data.topProducts.length === 0) return;
+            const canvas = document.getElementById('productChart');
+            if (!canvas) return;
 
+            if (this.chartProduct) {
+                this.chartProduct.destroy();
+                this.chartProduct = null;
+            }
+
+            const ctx = canvas.getContext('2d');
             const top = this.data.topProducts.slice(0, 8);
             this.chartProduct = new Chart(ctx, {
                 type: 'bar',
@@ -474,9 +485,9 @@ function analyticsPage() {
                         label: 'Jumlah Terjual',
                         data: top.map(p => p.totalQty),
                         backgroundColor: [
-                            'hsl(24,35%,25%)', 'hsl(35,70%,42%)', 'hsl(185,50%,38%)',
-                            'hsl(270,60%,50%)', 'hsl(15,65%,45%)', 'hsl(145,55%,38%)',
-                            'hsl(210,70%,48%)', 'hsl(45,75%,45%)',
+                            '#c9a84c', '#d4b96a', '#8b7a3c',
+                            '#e8d48b', '#a89240', '#b8982e',
+                            '#d4a017', '#cca43b',
                         ],
                         borderRadius: 5,
                     }],
@@ -484,6 +495,7 @@ function analyticsPage() {
                 options: {
                     indexAxis: 'y',
                     responsive: true,
+                    maintainAspectRatio: false,
                     plugins: {
                         legend: { display: false },
                         tooltip: {
