@@ -59,7 +59,7 @@
     </div>
 
     {{-- Loading skeleton --}}
-    <div x-show="loading" class="space-y-4">
+    <div x-show="loading" x-cloak class="space-y-4">
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
             <template x-for="i in 4" :key="i">
                 <div class="h-24 rounded-2xl animate-pulse" style="background: hsl(35,25%,88%);"></div>
@@ -133,8 +133,8 @@
                      style="color: var(--text-mid);">
                     <p class="text-sm">Tidak ada data untuk periode ini</p>
                 </div>
-                <div style="min-height: 200px;">
-                    <canvas id="dailyChart" height="80"></canvas>
+                <div :style="data && data.dailySales && data.dailySales.length > 0 ? 'height:200px;' : 'height:0;overflow:hidden;'">
+                    <canvas id="dailyChart"></canvas>
                 </div>
             </div>
 
@@ -396,13 +396,13 @@ function analyticsPage() {
             const res = await fetch('/admin/api/analytics?' + params.toString());
             if (res.ok) {
                 this.data = await res.json();
-                // Use setTimeout to ensure DOM is rendered after x-if evaluates
-                setTimeout(() => {
-                    this.renderDailyChart();
-                    this.renderProductChart();
-                }, 100);
             }
             this.loading = false;
+            // Wait for DOM to settle, then render charts
+            setTimeout(() => {
+                this.renderDailyChart();
+                this.renderProductChart();
+            }, 300);
         },
 
         updateDailyChart() {
