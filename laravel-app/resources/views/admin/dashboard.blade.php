@@ -49,10 +49,15 @@
     </div>
 
     <!-- Chart -->
-    <div x-show="!loading && stats.ordersByStatus && stats.ordersByStatus.length > 0" x-cloak
-         class="rounded-2xl border p-4" style="background: white; border-color: hsl(35,25%,88%);">
+    <div class="rounded-2xl border p-4" style="background: white; border-color: hsl(35,25%,88%);">
         <h2 class="font-semibold text-sm mb-4" style="color: hsl(24,10%,15%);">Pesanan per Status</h2>
-        <canvas id="statusChart" height="100"></canvas>
+        <div x-show="!loading && (!stats.ordersByStatus || stats.ordersByStatus.length === 0)" x-cloak
+             class="flex items-center justify-center h-32" style="color: var(--text-mid);">
+            <p class="text-sm">Belum ada data pesanan</p>
+        </div>
+        <div style="position:relative; height:240px; width:100%;">
+            <canvas id="statusChart"></canvas>
+        </div>
     </div>
 
     <!-- Pending orders -->
@@ -114,7 +119,17 @@ function dashboard() {
         async init() {
             await Promise.all([this.fetchStats(), this.fetchPending()]);
             this.loading = false;
-            this.$nextTick(() => this.renderChart());
+            this.waitAndRenderChart();
+        },
+
+        waitAndRenderChart(attempts = 0) {
+            if (attempts > 20) return;
+            const canvas = document.getElementById('statusChart');
+            if (canvas) {
+                this.renderChart();
+            } else {
+                setTimeout(() => this.waitAndRenderChart(attempts + 1), 100);
+            }
         },
 
         async fetchStats() {
@@ -137,7 +152,7 @@ function dashboard() {
                 body: JSON.stringify({ status }),
             });
             await Promise.all([this.fetchStats(), this.fetchPending()]);
-            this.$nextTick(() => this.renderChart());
+            setTimeout(() => this.renderChart(), 50);
         },
 
         renderChart() {
@@ -146,27 +161,34 @@ function dashboard() {
                 pending: 'Menunggu', processing: 'Diproses', preparing: 'Dibuat',
                 ready: 'Siap', completed: 'Selesai', cancelled: 'Batal',
             };
-            const ctx = document.getElementById('statusChart');
-            if (!ctx) return;
-            if (this.chart) this.chart.destroy();
-            this.chart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: this.stats.ordersByStatus.map(s => labels[s.status] || s.status),
-                    datasets: [{
-                        data: this.stats.ordersByStatus.map(s => s.count),
-                        backgroundColor: 'hsl(24,35%,25%)',
-                        borderRadius: 6,
-                    }],
-                },
-                options: {
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        x: { grid: { display: false }, ticks: { font: { size: 11 } } },
-                        y: { grid: { display: false }, ticks: { font: { size: 11 }, stepSize: 1 } },
+            const canvas = document.getElementById('statusChart');
+            if (!canvas) return;
+            if (this.chart) {
+                try { this.chart.destroy(); } catch(e) {}
+                this.chart = null;
+            }
+            try {
+                this.chart = new Chart(canvas, {
+                    type: 'bar',
+                    data: {
+                        labels: this.stats.ordersByStatus.map(s => labels[s.status] || s.status),
+                        datasets: [{
+                            data: this.stats.ordersByStatus.map(s => s.count),
+                            backgroundColor: '#c9a84c',
+                            borderRadius: 6,
+                        }],
                     },
-                },
-            });
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+                            y: { grid: { display: false }, ticks: { font: { size: 11 }, stepSize: 1 } },
+                        },
+                    },
+                });
+            } catch (e) { console.error('Status chart error:', e); }
         },
     };
 }
