@@ -129,11 +129,11 @@
                     </div>
                 </div>
 
-                <div x-show="data && data.dailySales && data.dailySales.length === 0" class="flex items-center justify-center h-32"
+                <div x-show="data && data.dailySales && data.dailySales.length === 0" x-cloak class="flex items-center justify-center h-32"
                      style="color: var(--text-mid);">
                     <p class="text-sm">Tidak ada data untuk periode ini</p>
                 </div>
-                <div :style="data && data.dailySales && data.dailySales.length > 0 ? 'height:200px;' : 'height:0;overflow:hidden;'">
+                <div id="dailyChartWrapper" style="position:relative; height:200px; width:100%;">
                     <canvas id="dailyChart"></canvas>
                 </div>
             </div>
@@ -199,14 +199,14 @@
                     <p class="text-xs mt-0.5" style="color: var(--text-mid);">Berdasarkan jumlah item yang dipesan (tidak termasuk pesanan batal)</p>
                 </div>
 
-                <div x-show="data && data.topProducts && data.topProducts.length === 0" class="p-8 text-center">
+                <div x-show="data && data.topProducts && data.topProducts.length === 0" x-cloak class="p-8 text-center">
                     <p class="text-sm" style="color: var(--text-mid);">Tidak ada data produk untuk periode ini</p>
                 </div>
 
-                <div x-show="data && data.topProducts && data.topProducts.length > 0">
+                <div x-show="data && data.topProducts && data.topProducts.length > 0" x-cloak>
                     {{-- Bar chart produk --}}
-                    <div class="px-4 pt-4 pb-2">
-                        <canvas id="productChart" height="70"></canvas>
+                    <div class="px-4 pt-4 pb-2" style="position:relative; height:200px; width:100%;">
+                        <canvas id="productChart"></canvas>
                     </div>
 
                     {{-- Tabel produk --}}
@@ -411,23 +411,30 @@ function analyticsPage() {
 
         renderDailyChart() {
             if (!this.data || !this.data.dailySales || this.data.dailySales.length === 0) return;
-            const canvas = document.getElementById('dailyChart');
-            if (!canvas) return;
-
-            // Destroy existing chart instance
+            
+            // Destroy previous instance
             if (this.chartDaily) {
                 this.chartDaily.destroy();
                 this.chartDaily = null;
             }
 
-            const ctx = canvas.getContext('2d');
+            const canvas = document.getElementById('dailyChart');
+            if (!canvas) return;
+            
+            // Reset canvas
+            const parent = canvas.parentNode;
+            const newCanvas = document.createElement('canvas');
+            newCanvas.id = 'dailyChart';
+            parent.removeChild(canvas);
+            parent.appendChild(newCanvas);
+
             const labels = this.data.dailySales.map(r =>
                 new Date(r.date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })
             );
             const isRevenue = this.dailyChart === 'revenue';
             const values = this.data.dailySales.map(r => isRevenue ? r.revenue : r.orderCount);
 
-            this.chartDaily = new Chart(ctx, {
+            this.chartDaily = new Chart(newCanvas, {
                 type: 'bar',
                 data: {
                     labels,
@@ -445,19 +452,21 @@ function analyticsPage() {
                         legend: { display: false },
                         tooltip: {
                             callbacks: {
-                                label: ctx => isRevenue
-                                    ? 'Rp ' + ctx.parsed.y.toLocaleString('id-ID')
-                                    : ctx.parsed.y + ' pesanan',
+                                label: function(context) {
+                                    return isRevenue
+                                        ? 'Rp ' + context.parsed.y.toLocaleString('id-ID')
+                                        : context.parsed.y + ' pesanan';
+                                },
                             },
                         },
                     },
                     scales: {
                         x: { grid: { display: false }, ticks: { font: { size: 10 }, maxRotation: 45 } },
                         y: {
-                            grid: { color: 'hsl(35,25%,92%)' },
+                            grid: { color: '#eee' },
                             ticks: {
                                 font: { size: 10 },
-                                callback: v => isRevenue ? 'Rp ' + (v / 1000).toFixed(0) + 'rb' : v,
+                                callback: function(v) { return isRevenue ? 'Rp ' + (v / 1000).toFixed(0) + 'rb' : v; },
                             },
                         },
                     },
@@ -467,17 +476,24 @@ function analyticsPage() {
 
         renderProductChart() {
             if (!this.data || !this.data.topProducts || this.data.topProducts.length === 0) return;
-            const canvas = document.getElementById('productChart');
-            if (!canvas) return;
-
+            
             if (this.chartProduct) {
                 this.chartProduct.destroy();
                 this.chartProduct = null;
             }
 
-            const ctx = canvas.getContext('2d');
+            const canvas = document.getElementById('productChart');
+            if (!canvas) return;
+            
+            // Reset canvas
+            const parent = canvas.parentNode;
+            const newCanvas = document.createElement('canvas');
+            newCanvas.id = 'productChart';
+            parent.removeChild(canvas);
+            parent.appendChild(newCanvas);
+
             const top = this.data.topProducts.slice(0, 8);
-            this.chartProduct = new Chart(ctx, {
+            this.chartProduct = new Chart(newCanvas, {
                 type: 'bar',
                 data: {
                     labels: top.map(p => p.productName),
@@ -499,11 +515,11 @@ function analyticsPage() {
                     plugins: {
                         legend: { display: false },
                         tooltip: {
-                            callbacks: { label: ctx => ctx.parsed.x + ' item' },
+                            callbacks: { label: function(context) { return context.parsed.x + ' item'; } },
                         },
                     },
                     scales: {
-                        x: { grid: { color: 'hsl(35,25%,92%)' }, ticks: { font: { size: 10 } } },
+                        x: { grid: { color: '#eee' }, ticks: { font: { size: 10 } } },
                         y: { grid: { display: false }, ticks: { font: { size: 11 } } },
                     },
                 },
