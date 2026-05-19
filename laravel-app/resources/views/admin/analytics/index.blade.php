@@ -69,7 +69,10 @@
         <div class="h-60 rounded-2xl animate-pulse" style="background: hsl(35,25%,88%);"></div>
     </div>
 
-    <div x-show="!loading && data" x-cloak class="space-y-5">
+    <div x-show="!loading && data" x-cloak>
+    <template x-if="data">
+
+        <div class="space-y-5">
 
             {{-- ── SUMMARY CARDS ── --}}
             <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -334,6 +337,7 @@
             </div>
 
         </div>
+    </template>
     </div>
 
 </div>
