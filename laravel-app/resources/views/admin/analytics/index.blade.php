@@ -69,9 +69,7 @@
         <div class="h-60 rounded-2xl animate-pulse" style="background: hsl(35,25%,88%);"></div>
     </div>
 
-    <template x-if="!loading && data">
-
-        <div class="space-y-5">
+    <div x-show="!loading && data" x-cloak class="space-y-5">
 
             {{-- ── SUMMARY CARDS ── --}}
             <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -337,7 +335,7 @@
             </div>
 
         </div>
-    </template>
+    </div>
 
 </div>
 
@@ -399,16 +397,17 @@ function analyticsPage() {
             const res = await fetch('/admin/api/analytics?' + params.toString());
             if (res.ok) {
                 this.data = await res.json();
-                this.$nextTick(() => {
+                // Use setTimeout to ensure DOM is rendered after x-if evaluates
+                setTimeout(() => {
                     this.renderDailyChart();
                     this.renderProductChart();
-                });
+                }, 100);
             }
             this.loading = false;
         },
 
         updateDailyChart() {
-            this.$nextTick(() => this.renderDailyChart());
+            setTimeout(() => this.renderDailyChart(), 50);
         },
 
         renderDailyChart() {
